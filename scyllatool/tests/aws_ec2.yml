@@ -1,0 +1,11 @@
+---
+plugin: aws_ec2
+regions:
+   - "us-east-1"
+filters:
+   tag:Name:
+    - "scylla1"
+    - "scylla2"
+    - "scylla3"
+compose:
+   ansible_host: private_ip_address

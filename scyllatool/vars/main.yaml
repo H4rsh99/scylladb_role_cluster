@@ -1,0 +1,29 @@
+jdkversion:
+  - openjdk-8-jre-headless
+scylla_repo: http://downloads.scylladb.com/deb/debian/scylla-5.2.list
+s_gpg: "gpg --homedir /tmp --no-default-keyring --keyring /etc/apt/keyrings/scylladb.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys d0a112e067426ab2"
+scylla_repo_dest: "/etc/apt/sources.list.d/scylla.list"
+templ:
+  - /etc/apt/keyrings
+  - /etc/scylla/cassandra
+templl:
+  - scylla.yml.j2
+username: scylladb95
+passwd: password
+keyname: employee_db95
+gpg_key_needed: "{{ not ('d0a112e067426ab2' | keyring(path='/etc/apt/keyrings/scylladb.gpg')) }}"
+es_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+
+discovery_nodes: >-
+  "{% set ips = [] %}
+  {% for host in groups['all'] %}
+    {% set ip = hostvars[host]['ansible_default_ipv4']['address'] %}
+    {% if ip is defined %}
+      {{ ips.append(ip) }}
+    {% endif %}
+  {% endfor %}
+  {{ ips | join(',') }}"
+
+scylladb_use_internal_ip: true
+scylladb_listen_ip: "{% if scylladb_use_internal_ip|bool %}{{ internal_ip }}{% else %}{{ ansible_default_ipv4.address }}{% endif %}"
+

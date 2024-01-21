@@ -1,0 +1,36 @@
+---
+- name: gather IPs
+  setup:
+  register: target_host_info
+
+- name: Configure service1
+  template:
+    src: scylla.yaml.j2
+    dest: /etc/scylla/scylla.yaml
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  become: true
+  notify:
+    - Reload systemd
+
+- name: Check Scylla status
+  systemd:
+    name: scylla-server
+    state: started
+
+- name: Wait for a condition with a 2-minute timeout
+  wait_for:
+    timeout: 120
+
+- name: Create user in Scylla
+  command: >
+    cqlsh -u cassandra -p cassandra '{{ target_host_info.ansible_facts.ansible_default_ipv4.address }}' -e
+    "CREATE USER '{{ username }}' WITH PASSWORD '{{ passwd }}' SUPERUSER;"
+  changed_when: false
+
+- name: Create key in Scylla
+  command: >
+    cqlsh -u cassandra -p cassandra '{{ target_host_info.ansible_facts.ansible_default_ipv4.address }}' -e
+    "CREATE KEYSPACE {{ keyname }} WITH replication = {'class':'SimpleStrategy', 'replication_factor':3};"
+  changed_when: false
